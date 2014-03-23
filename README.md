@@ -8,33 +8,33 @@ Fuse support for app.net files. Or app.net support for fuse...
 
 Currently this needs a `.app.fuse.conf` in the current directory like so:
 
-``
+```
 [Auth]
-access_token = \<an app.net access token\>
-``
+access_token = <an app.net access token>
+```
 
 Then in your checkout of this you do:
 
-``
+```
 virtualenv env
 . env/bin/activate
 pip install -r requirements.txt
-``
+```
 
 to get all the needed stuff. Then run it in the same shell with:
 
-``
-python src/fs.py \<path_where_you_want_it_mounted\>
-``
+```
+python src/fs.py <path_where_you_want_it_mounted>
+```
 
 Then look into the dir with `ls` or any file-browser to see your files. Well,
 their metadata and as content their url...
 
 End it all with
 
-``
+```
 fusermount -f <mountpoint_from_above>
-``
+```
 
 ## Current state
 
