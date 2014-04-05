@@ -40,20 +40,20 @@ fusermount -f <mountpoint_from_above>
 
 **This is pre-alpha!**
 
-Currently it lists all your files stored on app.net. It reads the list of files
-once upon startup and then uses this.
+Currently it lists all your files stored on app.net without any folders. It
+reads the list of files once upon startup and then uses this.
 
 
 ## Ideas for the future
 
- - Learn how to make it a usable app.net application without manual giving it
-   an app.net access\_token
+ - [ ] Learn how to make it a usable app.net application without manual giving
+   it an app.net access\_token
 
- - Retrieve actual file contents.
+ - [x] Retrieve actual file contents.
 
- - Cache files locally, maybe in a hidden subdir or in `~/.app.fuse` or in
+ - [x] Cache files locally, maybe in a hidden subdir or in `~/.app.fuse` or in
    a database...
 
- - Update files from the net dynamically.
+ - [ ] Update files from the net dynamically.
 
- - Support for writing files.
+ - [ ] Support for writing files.

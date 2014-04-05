@@ -29,10 +29,14 @@ class AppNetFs(fuse.Fuse):
         print "initializing app.net-fs"
         super(AppNetFs, self).__init__(*args, **kwargs)
 
-        self.config = ConfigParser.ConfigParser()
+        self.config = ConfigParser.SafeConfigParser()
+        self.config.add_section('Local')
+        self.config.set('Local', 'cachedir', '.app.fuse.cache')
         self.config.read(['.app.fuse.conf'])
 
         adnpy.api.add_authorization_token(self.config.get('Auth', 'access_token'))
+
+        self.cachedir = self.config.get('Local', 'cachedir')
 
         self.files = {}
         self.adn_files = adnpy.api.get_my_files()[0]
@@ -58,19 +62,44 @@ class AppNetFs(fuse.Fuse):
         print "readdir( %s, %s )" % (path, offset)
         dirents = [u'.', u'..']
         if path == '/':
-            print "Append apn-files %s" % self.files.keys()
+            #print "Append apn-files %s" % self.files.keys()
             dirents.extend(self.files.keys())
         print "dirents = %s" % dirents
         for f in dirents:
             yield fuse.Direntry(str(f))
 
-    def read(self, path, size, offset):
-        print "read(%s, %i, %i)" % (path, size, offset)
+    def _get_cache_filename(self, sha1):
+        return os.path.join(
+            self.cachedir,
+            os.path.join(*[ sha1[i:i+4] for i in range(0, len(sha1), 4) ])
+        )
+
+    def open(self, path, flags):
+        print "open(%s, %s)" % (path, flags)
         pe = path.split('/')[-1]
         if pe not in self.files.keys():
             print "%s is not a file I know" % pe
             return 0
-        return bytes(self.files[pe]['url'])[offset:size+offset]
+        sha = self.files[pe]['sha1']
+        #print "Looking for file with sha1 of %s" % sha
+        cached_filepath = self._get_cache_filename(sha)
+        if not os.path.isfile(cached_filepath):
+            print "Gotta fetch that file first: %s" % cached_filepath
+            #print self.files[pe]
+            #print self.files[pe].keys()
+            if not os.path.isdir(os.path.dirname(cached_filepath)):
+                os.makedirs(os.path.dirname(cached_filepath))
+            f = adnpy.api.get_file_content(self.files[pe]['id'])
+            open(cached_filepath, 'w').write(f.content)
+
+        return 0
+
+    def read(self, path, size, offset):
+        pe = path.split('/')[-1]
+        cached_file = self._get_cache_filename(self.files[pe]['sha1'])
+        f = open(cached_file, 'r')
+        f.seek(offset)
+        return f.read(size)
 
 if __name__ == '__main__':
     fs = AppNetFs()
