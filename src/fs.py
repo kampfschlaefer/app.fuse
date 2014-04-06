@@ -4,10 +4,12 @@ import stat
 import os
 import time
 import ConfigParser
+import subprocess
 import fuse
 fuse.fuse_python_api = (0, 2)
 import adnpy
 
+import simplehttp
 
 class MyStat(fuse.Stat):
       def __init__(self):
@@ -34,7 +36,18 @@ class AppNetFs(fuse.Fuse):
         self.config.set('Local', 'cachedir', '.app.fuse.cache')
         self.config.read(['.app.fuse.conf'])
 
-        adnpy.api.add_authorization_token(self.config.get('Auth', 'access_token'))
+        server_address = ('', 8000)
+        httpd = simplehttp.BaseHTTPServer.HTTPServer(server_address, simplehttp.GetAppTokenHandler)
+
+        #adnpy.api.add_authorization_token(self.config.get('Auth', 'access_token'))
+        subprocess.check_call([
+            'xdg-open',
+            'https://account.app.net/oauth/authenticate?client_id=gTTvLAtQhg4f3cqbYfAU6awFxHUuVvnb&response_type=token&redirect_uri=http://localhost:8000&scope=files'
+        ])
+
+        httpd.handle_request()
+
+        raise Exception
 
         self.cachedir = self.config.get('Local', 'cachedir')
 
