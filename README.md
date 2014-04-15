@@ -46,7 +46,7 @@ reads the list of files once upon startup and then uses this.
 
 ## Ideas for the future
 
- - [ ] Learn how to make it a usable app.net application without manual giving
+ - [x] Learn how to make it a usable app.net application without manual giving
    it an app.net access\_token
 
  - [x] Retrieve actual file contents.
