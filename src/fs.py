@@ -4,10 +4,12 @@ import stat
 import os
 import time
 import ConfigParser
+import subprocess
 import fuse
 fuse.fuse_python_api = (0, 2)
 import adnpy
 
+import simplehttp
 
 class MyStat(fuse.Stat):
       def __init__(self):
@@ -32,9 +34,12 @@ class AppNetFs(fuse.Fuse):
         self.config = ConfigParser.SafeConfigParser()
         self.config.add_section('Local')
         self.config.set('Local', 'cachedir', '.app.fuse.cache')
+        self.config.add_section('Auth')
+        self.config.set('Auth', 'access_token', '')
         self.config.read(['.app.fuse.conf'])
 
-        adnpy.api.add_authorization_token(self.config.get('Auth', 'access_token'))
+
+        adnpy.api.add_authorization_token(self.get_access_token())
 
         self.cachedir = self.config.get('Local', 'cachedir')
 
@@ -45,6 +50,25 @@ class AppNetFs(fuse.Fuse):
             self.files[f['name']] = f
         #print self.files
         print self.files.keys()
+
+    def get_access_token(self):
+        if self.config.get('Auth', 'access_token') == '':
+            server_address = ('', 8000)
+            httpd = simplehttp.BaseHTTPServer.HTTPServer(server_address, simplehttp.GetAppTokenHandler)
+
+            subprocess.check_call([
+                'xdg-open',
+                'https://account.app.net/oauth/authenticate?client_id=gTTvLAtQhg4f3cqbYfAU6awFxHUuVvnb&response_type=token&redirect_uri=http://localhost:8000&scope=files'
+            ])
+
+            httpd.handle_request()
+            httpd.handle_request()
+
+            self.config.set('Auth', 'access_token', httpd.access_token)
+
+            self.config.write(open('.app.fuse.conf', 'w'))
+
+        return self.config.get('Auth', 'access_token')
 
     def getattr(self, path):
         st = MyStat()
